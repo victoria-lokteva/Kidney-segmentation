@@ -6,9 +6,10 @@ import torch
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, transform, directory: str, df_rle: pd.DataFrame, df_imgs: pd.DataFrame):
+    def __init__(self, transform, augmentation, directory: str, df_rle: pd.DataFrame, df_imgs: pd.DataFrame):
         super().__init__()
         self.transform = transform
+        self.augmentation = augmentation
         self.df_rle = df_rle
         self.df_imgs = df_imgs
         self.roots = [os.path.join(directory, image) for image in df_imgs['image_file'].tolist()]
@@ -49,6 +50,26 @@ class Dataset(torch.utils.data.Dataset):
         image_root = self.roots[item]
         image = tifffile.imread(image_root)
         image, mask = self.rle_decode(self.df_rle, image, image_root)
+        if self.augmentation:
+            image = self.augmentation(image)
         if self.transform:
             image = self.transform(image)
+            mask = self.transform(mask)
         return image, mask
+
+
+def encode_rle(mask)->str:
+    """convert mask to run-length encoded string"""
+
+    h, w = mask.shape[0], mask.shape[1]
+    mask = mask.reshape(h*w)
+    code = []
+    count = 0
+    for i in range(len(mask)):
+        if mask[i] == 255:
+            count += 1
+        else:
+            code.extend([i, count])
+    code = list(map(str, code))
+    rle_str = ' '.join(code)
+    return rle_str
