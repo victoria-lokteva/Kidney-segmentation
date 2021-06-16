@@ -6,16 +6,23 @@ import torch
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, transform, df_rle, df_imgs):
+    def __init__(self, transform, directory: str, df_rle: pd.DataFrame, df_imgs: pd.DataFrame):
         super().__init__()
         self.transform = transform
         self.df_rle = df_rle
         self.df_imgs = df_imgs
-        self.roots = [os.path.join('train_im/', image) for image in df_imgs['image_file'].tolist()]
+        self.roots = [os.path.join(directory, image) for image in df_imgs['image_file'].tolist()]
 
-    def rle_decode(df, image, root: str):
+    def rle_decode(df, image: np.ndarray, root: str):
         """ transform rle code to a segmentational mask"""
-        image_name = root.split('/')[1].split('.')[0]
+
+        if '/' in root:
+        # root = 'directory/file.extension'
+            image_name = root.split('/')[1].split('.')[0]
+        else:
+        # root = 'file.extension'
+            image_name = root.split('.')[0]
+
         column = df.loc[df['id'] == image_name]['encoding']
 
         code = list(map(int, column.values[0].split()))
