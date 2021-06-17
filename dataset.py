@@ -18,13 +18,13 @@ class Dataset(torch.utils.data.Dataset):
         """ transform rle code to a segmentational mask"""
 
         if '/' in root:
-        # root = 'directory/file.extension'
+            # root = 'directory/file.extension'
             image_name = root.split('/')[1].split('.')[0]
         else:
-        # root = 'file.extension'
+            # root = 'file.extension'
             image_name = root.split('.')[0]
 
-        column = df.loc[df['id'] == image_name]['encoding']
+        column = df.loc[df['id'] == image_name, 'encoding']
 
         code = list(map(int, column.values[0].split()))
 
@@ -51,18 +51,20 @@ class Dataset(torch.utils.data.Dataset):
         image = tifffile.imread(image_root)
         image, mask = self.rle_decode(self.df_rle, image, image_root)
         if self.augmentation:
-            image = self.augmentation(image)
+            augmented = self.augmentation(image=image, mask=mask)
+            image = augmented['image']
+            mask = augmented['mask']
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask)
         return image, mask
 
 
-def encode_rle(mask)->str:
+def encode_rle(mask) -> str:
     """convert mask to run-length encoded string"""
 
     h, w = mask.shape[0], mask.shape[1]
-    mask = mask.reshape(h*w)
+    mask = mask.reshape(h * w)
     code = []
     count = 0
     for i in range(len(mask)):
