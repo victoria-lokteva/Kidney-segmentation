@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import tifffile
 import torch
+from PIL import Image
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -19,7 +20,7 @@ class Dataset(torch.utils.data.Dataset):
 
         if '/' in root:
             # root = 'directory/file.extension'
-            image_name = root.split('/')[1].split('.')[0]
+            image_name = root.split('/')[-1].split('.')[0]
         else:
             # root = 'file.extension'
             image_name = root.split('.')[0]
@@ -54,6 +55,10 @@ class Dataset(torch.utils.data.Dataset):
             augmented = self.augmentation(image=image, mask=mask)
             image = augmented['image']
             mask = augmented['mask']
+
+        image = Image.fromarray(image)
+        mask = Image.fromarray(mask.astype(np.uint8))
+
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask)
