@@ -14,7 +14,7 @@ class Dataset(torch.utils.data.Dataset):
         self.df_imgs = df_imgs
         self.roots = [os.path.join(directory, image) for image in df_imgs['image_file'].tolist()]
 
-    def rle_decode(df, image: np.ndarray, root: str):
+    def rle_decode(self, df, image: np.ndarray, root: str):
         """ transform rle code to a segmentational mask"""
 
         if '/' in root:
