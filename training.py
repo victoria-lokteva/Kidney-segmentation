@@ -44,7 +44,7 @@ def test(net, test_loader, device):
     return pred
 
 
-def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=100):
+def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=100, transfer_learning=False):
 
     net = net.to(device)
     loss_f = SoftDiceLoss()
@@ -59,7 +59,11 @@ def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=1
             target = target.to(device)
 
             optimizer.zero_grad()
-            output = net(image)
+            if transfer_learning:
+                output = net(image)
+                output = output['out']
+            else:
+                output = net(image)
             loss = loss_f(output, target)
             loss.backward()
             optimizer.step()
