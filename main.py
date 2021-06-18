@@ -30,7 +30,7 @@ transform = transforms.Compose([transforms.Resize((300, 300)),
 
 train_loader, test_loader = create_loaders(transform, train_directory, test_directory, df_rle, df_imgs, batch_size=16)
 
-device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 model = prepare_model()
-model = train(model, train_loader, test_loader, device, lr=0.01, num_epochs=1, step=100, transfer_learning=True)
+model = train(model, train_loader, test_loader, device, lr=0.01, num_epochs=20, step=100, transfer_learning=True)
