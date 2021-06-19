@@ -16,7 +16,7 @@ class SoftDiceLoss(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, pred, target, smooth=0.1):
+    def forward(self, pred, target, smooth=0.1):
         # smooth helps avoid devision by zero
         a = torch.sum(pred)
         b = torch.sum(target)
@@ -26,7 +26,7 @@ class SoftDiceLoss(nn.Module):
         return softdice
 
 
-def test(net, test_loader, device):
+def test(net, test_loader, device, transfer_learning=False):
 
     loss_f = SoftDiceLoss()
     total_loss = 0
@@ -35,13 +35,19 @@ def test(net, test_loader, device):
     net = net.eval()
     with torch.no_grad():
         for idx, (image, target) in enumerate(test_loader):
-            image = image.to(device)
-            target = target.to(device)
-            pred = net(image)
-            loss = loss_f(pred, target)
+            image, target = image.to(device), target.to(device)
+
+            if transfer_learning:
+                output = net(image)
+                output = output['out']
+            else:
+                output = net(image)
+            prediction = output.argmax(0)
+
+            loss = loss_f(prediction, target)
             total_loss += loss
         print(total_loss)
-    return pred
+    return prediction
 
 
 def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=100, transfer_learning=False):
@@ -55,8 +61,7 @@ def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=1
         train_loader = iter(train_loader)
 
         for idx, (image, target) in tqdm(enumerate(train_loader)):
-            image = image.to(device)
-            target = target.to(device)
+            image, target = image.to(device), target.to(device)
 
             optimizer.zero_grad()
             if transfer_learning:
@@ -64,12 +69,11 @@ def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=1
                 output = output['out']
             else:
                 output = net(image)
-            loss = loss_f(output, target)
+            prediction = output.argmax(0)
+            loss = loss_f(prediction, target)
             loss.backward()
             optimizer.step()
             scheduler.step()
-
-        test(net, test_loader, device)
 
     return net
 

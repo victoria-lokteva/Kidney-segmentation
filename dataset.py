@@ -56,8 +56,8 @@ class Dataset(torch.utils.data.Dataset):
             image = augmented['image']
             mask = augmented['mask']
 
-        image = Image.fromarray(image)
-        mask = Image.fromarray(mask.astype(np.uint8))
+        image = Image.fromarray(image).convert('RGB')
+        mask = Image.fromarray(mask.astype(np.uint8), 'L')
 
         if self.transform:
             image = self.transform(image)
