@@ -14,6 +14,7 @@ class Dataset(torch.utils.data.Dataset):
         self.df_rle = df_rle
         self.df_imgs = df_imgs
         self.roots = [os.path.join(directory, image) for image in df_imgs['image_file'].tolist()]
+        self.tiling()
 
     def rle_decode(self, df, image: np.ndarray, root: str):
         """ transform rle code to a segmentational mask"""
@@ -42,15 +43,38 @@ class Dataset(torch.utils.data.Dataset):
         return image, mask
 
     def __len__(self):
-        return len(self.images)
+        return len(self.tiled_images)
 
     def __iter__(self, x):
         return iter(x)
 
+    def tiling(self, tile_size=1024):
+        '''since training images are extremely large, we divide them into smaller ones'''
+
+        self.tiled_images = []
+        self.tiled_masks = []
+
+        for item in range(len(self.roots)):
+
+            image_root = self.roots[item]
+            image = tifffile.imread(image_root)
+            image, mask = self.rle_decode(self.df_rle, image, image_root)
+            width, height = image.shape[:2]
+
+            for x in range(0, width, tile_size):
+                x1 = min(width, x + tile_size)
+                for y in range(0, height, tile_size):
+                    y1 = min(height, y + tile_size)
+                    tiled_image = image[x:x1, y:y1]
+                    tiled_mask = mask[x:x1, y:y1]
+                    self.tiled_images.append(tiled_image)
+                    self.tiled_masks.append(tiled_mask)
+
     def __getitem__(self, item):
-        image_root = self.roots[item]
-        image = tifffile.imread(image_root)
-        image, mask = self.rle_decode(self.df_rle, image, image_root)
+
+        image = self.tiled_images[item]
+        mask = self.tiled_masks[item]
+
         if self.augmentation:
             augmented = self.augmentation(image=image, mask=mask)
             image = augmented['image']
