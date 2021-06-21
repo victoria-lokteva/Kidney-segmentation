@@ -57,7 +57,12 @@ class Dataset(torch.utils.data.Dataset):
         for item in range(len(self.roots)):
 
             image_root = self.roots[item]
-            image = tifffile.imread(image_root)
+            try:
+                image = tifffile.imread(image_root)
+            except:
+                print(f'Image {image_root} not found')
+                continue
+
             image, mask = self.rle_decode(self.df_rle, image, image_root)
             width, height = image.shape[:2]
 
