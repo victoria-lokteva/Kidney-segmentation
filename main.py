@@ -3,8 +3,9 @@ import numpy as np
 import pandas as pd
 import torch
 from model import prepare_model
-from training import train, test, create_loaders
+from training import train, test
 from torchvision import transforms as transforms
+from dataset import Dataset
 
 np.random.seed = 7
 torch.manual_seed = 7
@@ -28,7 +29,10 @@ transform = transforms.Compose([transforms.Resize((300, 300)),
                                 transforms.ToTensor(),
                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
-train_loader, test_loader = create_loaders(transform, train_directory, test_directory, df_rle, df_imgs, batch_size=16)
+train_data = Dataset(transform, augmentation, train_directory, df_rle, df_imgs)
+test_data = Dataset(transform, None, test_directory, df_rle, df_imgs)
+train_loader = torch.utils.data.DataLoader(train_data, batch_size=64)
+test_loader = torch.utils.data.DataLoader(test_data, batch_size=64)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

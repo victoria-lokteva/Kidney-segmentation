@@ -1,15 +1,6 @@
 import torch
 import torch.nn as nn
 from tqdm.notebook import tqdm as tqdm
-from dataset import Dataset
-
-
-def create_loaders(transform, train_directory, test_directory,df_rle, df_imgs, batch_size):
-    train_data = Dataset(transform, train_directory, df_rle, df_imgs)
-    test_data = Dataset(transform, test_directory, df_rle, df_imgs)
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size)
-    return train_loader, test_loader
 
 
 class SoftDiceLoss(nn.Module):
@@ -27,7 +18,6 @@ class SoftDiceLoss(nn.Module):
 
 
 def test(net, test_loader, device, transfer_learning=False):
-
     loss_f = SoftDiceLoss()
     total_loss = 0
     test_loader = iter(test_loader)
@@ -51,7 +41,6 @@ def test(net, test_loader, device, transfer_learning=False):
 
 
 def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=100, transfer_learning=False):
-
     net = net.to(device)
     loss_f = SoftDiceLoss()
     optimizer = torch.optim.Adam(net.parameters(), lr)
@@ -76,6 +65,3 @@ def train(net, train_loader, test_loader, device, lr=0.01, num_epochs=30, step=1
             scheduler.step()
 
     return net
-
-
-
